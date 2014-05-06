@@ -3,7 +3,7 @@
 // @description Script dedicated to improving kruv's endless battle browser game
 // @namespace   http://feildmaster.com/
 // @include     http://www.kruv.net/endlessBattle.html
-// @version     1.1
+// @version     1.2pre
 // @grant       none
 // ==/UserScript==
 
