@@ -3,7 +3,7 @@
 // @description Script dedicated to improving kruv's endless battle browser game
 // @namespace   http://feildmaster.com/
 // @include     http://www.kruv.net/endlessBattle.html
-// @version     1pre
+// @version     1
 // @grant       none
 // ==/UserScript==
 
@@ -35,6 +35,16 @@ game.inventory.lootItem = function lootItem(item) {
 }
 // End selling items
 
+// Start fixing health - can be removed when fixed live
+game.player.baseHealthLevelUpBonus = 0;
+game.player.baseHp5LevelUpBonus = 0;
+    
+// Add stats to the player for leveling up
+for (var x = 1; x < game.player.level; x++) {
+    game.player.baseHealthLevelUpBonus += Math.floor(game.player.healthLevelUpBonusBase * (Math.pow(1.15, x)));
+    game.player.baseHp5LevelUpBonus += Math.floor(game.player.hp5LevelUpBonusBase * (Math.pow(1.15, x)));
+}
+// End fixing health
 
 // Start insert script options
 $("#optionsWindowOptionsArea").append('<div id="improvementOptionsTitle" class="optionsWindowOptionsTitle">Endless Improvement Options</div>');
