@@ -3,7 +3,7 @@
 // @description Script dedicated to improving kruv's endless battle browser game
 // @namespace   http://feildmaster.com/
 // @include     http://www.kruv.net/endlessBattle.html
-// @version     1
+// @version     1.1pre
 // @grant       none
 // ==/UserScript==
 
@@ -46,6 +46,77 @@ for (var x = 1; x < game.player.level; x++) {
 }
 // End fixing health
 
+// Start mercenary highlighting
+var enableHighlight = true;
+var currentMercenary = null;
+
+game.mercenaryManager.originalPurchaseMercenary = game.mercenaryManager.purchaseMercenary;
+game.mercenaryManager.purchaseMercenary = function perchaseMercenary(type) {
+    game.mercenaryManager.originalPurchaseMercenary(type);
+    highlightMostEfficientMercenary();
+}
+
+// Re-calculate after buying an upgrade
+game.upgradeManager.originalPurchaseUpgrade = game.upgradeManager.purchaseUpgrade;
+game.upgradeManager.purchaseUpgrade = function purchaseUpgrade(id) {
+    game.upgradeManager.originalPurchaseUpgrade(id);
+    highlightMostEfficientMercenary();
+}
+
+function highlightMostEfficientMercenary() {
+    if (!enableHighlight) {
+        removeHighlight();
+        currentMercenary = null;
+        return;
+    }
+    var newMercenary;
+    var newValue = 0;
+    
+    for (var curMercenary in MercenaryType) {
+        var curValue = getMercenaryCost(curMercenary) / game.mercenaryManager.getMercenaryBaseGps(curMercenary);
+        
+        if (newMercenary == null || curValue < newValue) {
+            newMercenary = curMercenary;
+            newValue = curValue;
+        }
+    }
+    
+    // Only update if changed
+    if (currentMercenary != newMercenary) {
+        removeHighlight(); 
+        currentMercenary = newMercenary;
+        getMercenaryElement(newMercenary).css('color', '#ffff00');
+    }
+}
+
+function removeHighlight() {
+    if (currentMercenary) {
+        getMercenaryElement(currentMercenary).css('color', '#fff');
+    }
+}
+
+function getMercenaryCost(type) {
+    switch (type) {
+    case MercenaryType.FOOTMAN:
+        return game.mercenaryManager.footmanPrice;
+    case MercenaryType.CLERIC:
+        return game.mercenaryManager.clericPrice;
+    case MercenaryType.COMMANDER:
+        return game.mercenaryManager.commanderPrice;
+    case MercenaryType.MAGE:
+        return game.mercenaryManager.magePrice;
+    case MercenaryType.THIEF:
+        return game.mercenaryManager.thiefPrice;
+    case MercenaryType.WARLOCK:
+        return game.mercenaryManager.warlockPrice;
+    }
+}
+
+function getMercenaryElement(type) {
+    return $("#"+ type.toLowerCase() +"Name");
+}
+// End mercenary highlighting
+
 // Start insert script options
 $("#optionsWindowOptionsArea").append('<div id="improvementOptionsTitle" class="optionsWindowOptionsTitle">Endless Improvement Options</div>');
 // Add function to toggle selling ability
@@ -55,4 +126,12 @@ game.autoSellOptionClick = function autoSellOptionClick() {
 }
 // Add option for auto sell inventory items
 $("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.autoSellOptionClick()">Auto sell new (non-rare) loot: <span id="autoSellValue">OFF</span></div>');
+// Add function to toggle mercenary highlighting
+game.highlightBestMercenaryClick = function highlightBestMercenaryClick() {
+    enableHighlight = !enableHighlight;
+    highlightMostEfficientMercenary();
+    $("#highlightMercenaryValue").html(enableHighlight?"ON":"OFF");
+}
+// Add option to toggle mercenary highlighting
+$("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.highlightBestMercenaryClick()">Highlight most cost efficient mercenary: <span id="highlightMercenaryValue">' + (enableHighlight?"ON":"OFF") + '</span></div>');
 // End insert script options
