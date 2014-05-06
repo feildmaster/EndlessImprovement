@@ -7,6 +7,26 @@
 // @grant       none
 // ==/UserScript==
 
+// Start variables - our custom variables...
+var autoSellLoot = false;
+var enableHighlight = true;
+function endlessInit() {
+    // Load Options
+    if (typeof (Storage) !== "undefined" && localStorage.endlessSaved != null) {
+        // Load our options
+        autoSellLoot = localStorage.endlessAutoSellLoot == 'true';
+        enableHighlight = localStorage.endlessEnableHighlight == 'true';
+    }
+    highlightMostEfficientMercenary(); // Run once on load
+}
+
+function endlessSave() {
+    localStorage.endlessSaved = 1;
+    localStorage.endlessAutoSellLoot = autoSellLoot;
+    localStorage.endlessEnableHighlight = enableHighlight;
+}
+// End variables
+
 // Start "Selling Inventory Items"
 game.inventory.sell = function sell(item) {
     // Get the sell value and give the gold to the player; don't use the gainGold function as it will include gold gain bonuses
@@ -17,7 +37,6 @@ game.inventory.sell = function sell(item) {
     game.stats.goldFromItems += value;
 }
 
-var autoSellLoot = false;
 game.inventory.lootItem = function lootItem(item) {
     for (var x = 0; x < game.inventory.maxSlots; x++) {
         if (game.inventory.slots[x] == null) {
@@ -47,7 +66,6 @@ for (var x = 1; x < game.player.level; x++) {
 // End fixing health
 
 // Start mercenary highlighting
-var enableHighlight = true;
 var currentMercenary = null;
 
 game.mercenaryManager.originalPurchaseMercenary = game.mercenaryManager.purchaseMercenary;
@@ -117,7 +135,16 @@ function getMercenaryElement(type) {
 }
 // End mercenary highlighting
 
+// Order is important. Initialize before adding our options
+endlessInit();
+
 // Start insert script options
+// Override option saving (so we can save our variables!)
+game.options.originalSave = game.options.save;
+game.options.save = function save() {
+    game.options.originalSave();
+    endlessSave();
+}
 $("#optionsWindowOptionsArea").append('<div id="improvementOptionsTitle" class="optionsWindowOptionsTitle">Endless Improvement Options</div>');
 // Add function to toggle selling ability
 game.autoSellOptionClick = function autoSellOptionClick() {
