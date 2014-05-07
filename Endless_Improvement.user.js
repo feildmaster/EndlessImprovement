@@ -8,22 +8,53 @@
 // @grant       none
 // ==/UserScript==
 
+// Start MISC
+String.prototype.toCapitalize = function() {
+    return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
+}
+// End MISC
+
+
 // Start variables - our custom variables...
-var autoSellLoot = false;
+var autoSellLoot = {
+    COMMON: false,
+    UNCOMMON: false,
+    RARE: false,
+    EPIC: false,
+    LEGENDARY: false,
+};
+
 var enableHighlight = true;
 function endlessInit() {
     // Load Options
-    if (typeof (Storage) !== "undefined" && localStorage.endlessSaved != null) {
+    if (typeof (Storage) !== "undefined" && localStorage.endlessSaved !== null) {
         // Load our options
-        autoSellLoot = localStorage.endlessAutoSellLoot == 'true';
-        enableHighlight = localStorage.endlessEnableHighlight == 'true';
+        enableHighlight = localStorage.endlessEnableHighlight === 'true';
+        autoSellLoot.COMMON = localStorage.endlessAutoSellLootCommon === 'true';
+        autoSellLoot.UNCOMMON = localStorage.endlessAutoSellLootUncommon === 'true';
+        autoSellLoot.RARE = localStorage.endlessAutoSellLootRare === 'true';
+        autoSellLoot.EPIC = localStorage.endlessAutoSellLootEpic === 'true';
+        autoSellLoot.LEGENDARY = localStorage.endlessAutoSellLootLegendary === 'true';
+        var autoSell = localStorage.autoSellLoot;
+        if (typeof(autoSell) !== "undefined") {
+            localStorage.removeItem('autoSellLoot');
+            if (autoSell === 'true') {
+                autoSellLoot.COMMON = true;
+                autoSellLoot.UNCOMMON = true;
+                autoSellLoot.RARE = true;
+            }
+        }
     }
     highlightMostEfficientMercenary(); // Run once on load
 }
 
 function endlessSave() {
     localStorage.endlessSaved = 1;
-    localStorage.endlessAutoSellLoot = autoSellLoot;
+    localStorage.endlessAutoSellLootCommon = autoSellLoot.COMMON;
+    localStorage.endlessAutoSellLootUncommon = autoSellLoot.UNCOMMON;
+    localStorage.endlessAutoSellLootRare = autoSellLoot.RARE;
+    localStorage.endlessAutoSellLootEpic = autoSellLoot.EPIC;
+    localStorage.endlessAutoSellLootLegendary = autoSellLoot.LEGENDARY;
     localStorage.endlessEnableHighlight = enableHighlight;
 }
 // End variables
@@ -53,7 +84,7 @@ game.inventory.lootItem = function lootItem(item) {
     for (var x = 0; x < game.inventory.maxSlots; x++) {
         if (game.inventory.slots[x] == null) {
             // You can only sell what you can carry!
-            if (autoSellLoot && !(item.rarity == ItemRarity.LEGENDARY || item.rarity == ItemRarity.EPIC)) {
+            if (autoSellLoot[item.rarity]) {
                 sell(item);
             } else {
                 game.inventory.slots[x] = item;
@@ -148,12 +179,26 @@ game.options.save = function save() {
 }
 $("#optionsWindowOptionsArea").append('<div id="improvementOptionsTitle" class="optionsWindowOptionsTitle">Endless Improvement Options</div>');
 // Add function to toggle selling ability
-game.autoSellOptionClick = function autoSellOptionClick() {
-    autoSellLoot = !autoSellLoot;
-    $("#autoSellValue").html(autoSellLoot?"ON":"OFF");
+game.autoSellOptionClick = function autoSellOptionClick(option) {
+    autoSellLoot[option] = !autoSellLoot[option];
+    $("#autoSellValue" + option.toCapitalize()).html(autoSellLoot[option]?"ON":"OFF");
 }
 // Add option to auto sell inventory items
-$("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.autoSellOptionClick()">Auto sell new (non-rare) loot: <span id="autoSellValue">' + (autoSellLoot?"ON":"OFF") + '</span></div>');
+function getItemColor(type) {
+    switch (type) {
+        case ItemRarity.COMMON: return "#fff";
+        case ItemRarity.UNCOMMON: return "#00ff05";
+        case ItemRarity.RARE: return "#0005ff";
+        case ItemRarity.EPIC: return "#b800af";
+        case ItemRarity.LEGENDARY: return "#ff6a00";
+    }
+}
+for (var rarity in ItemRarity) {
+    if (rarity === 'count') continue;
+    $("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.autoSellOptionClick(\'' + rarity + '\')">' +
+        'Auto sell new <span style="color: ' + getItemColor(rarity) + '">' + rarity.toCapitalize() + '</span> loot: ' +
+        '<span id="autoSellValue' + rarity.toCapitalize() +'">' + (autoSellLoot[rarity]?"ON":"OFF") + '</span></div>');
+}
 // Add function to toggle mercenary highlighting
 game.highlightBestMercenaryClick = function highlightBestMercenaryClick() {
     enableHighlight = !enableHighlight;
