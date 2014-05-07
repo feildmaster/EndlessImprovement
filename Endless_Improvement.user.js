@@ -161,5 +161,5 @@ game.highlightBestMercenaryClick = function highlightBestMercenaryClick() {
     $("#highlightMercenaryValue").html(enableHighlight?"ON":"OFF");
 }
 // Add option to toggle mercenary highlighting
-$("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.highlightBestMercenaryClick()">Highlight most cost efficient mercenary: <span id="highlightMercenaryValue">' + (enableHighlight?"ON":"OFF") + '</span></div>');
+$("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.highlightBestMercenaryClick()"><span style="color: #ffff00;">Highlight</span> most cost efficient mercenary: <span id="highlightMercenaryValue">' + (enableHighlight?"ON":"OFF") + '</span></div>');
 // End insert script options
