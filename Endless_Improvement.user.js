@@ -70,6 +70,21 @@ for (var x = 1; x < game.player.level; x++) {
 }
 // End fixing health
 
+// Start stats window improvement - only update when the window is open!
+var statsWindowShowing = false;
+$("#stats").mousedown(function() {
+    statsWindowShowing = true;
+});
+$("#statsWindowExitButton").mousedown(function() {
+    statsWindowShowing = false;
+});
+var originalStatsUpdate = game.stats.update;
+game.stats.update = function update() {
+    if (!statsWindowShowing) return;
+    originalStatsUpdate.apply(game.stats);
+}
+// End stats window improvement
+
 // Start "Selling Inventory Items"
 function sell(item) {
     // Get the sell value and give the gold to the player; don't use the gainGold function as it will include gold gain bonuses
