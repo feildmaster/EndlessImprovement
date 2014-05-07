@@ -4,6 +4,7 @@
 // @namespace   http://feildmaster.com/
 // @include     http://www.kruv.net/endlessBattle.html
 // @version     1.2pre
+// @updateURL   https://raw.githubusercontent.com/feildmaster/EndlessImprovement/master/Endless_Improvement.user.js
 // @grant       none
 // ==/UserScript==
 
