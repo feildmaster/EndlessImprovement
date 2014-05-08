@@ -398,9 +398,93 @@ function mercenaryHighlighting() {
 mercenaryHighlighting();
 // End mercenary highlighting
 
+// Start bonus kill stats
+function monsterKillStats() {
+    // Todo: make these stats global... for quests!
+    var bossKills = 0;
+    var bossLevel = 0;
+    var isUpdated = false;
+
+    new Improvement(init, load, save, update).register();
+    
+    function init() {
+        // hook into monster damage function, has to be done every time a monster is created!
+        var originalMonsterCreator = game.monsterCreator.createRandomMonster;
+        game.monsterCreator.createRandomMonster = function() {
+            // Create a monster
+            var newMonster = originalMonsterCreator.apply(game.monsterCreator, arguments);
+            // Override it's takeDamage function
+            var originalDamageFunction = newMonster.takeDamage;
+            newMonster.takeDamage = function(damage) {
+                originalDamageFunction.apply(newMonster, arguments);
+                // Yay, it was killed!
+                if (!newMonster.alive) {
+                    monsterKilled(newMonster);
+                }
+            }
+            
+            return newMonster;
+        }
+    }
+    
+    function load() {
+        if (!isNaN(localStorage.endlessBossKills)) {
+            bossKills = parseInt(localStorage.endlessBossKills);
+            bossLevel = parseInt(localStorage.endlessBossLevel);
+        }
+    
+        $("#statsWindowStatsArea").append('<div class="statsWindowText"><span style="color: #F00;">Boss</span> kills at player level:</div>');
+        $("#statsWindowStatValuesArea").append('<div id="statsWindowBossKills" class="statsWindowText"></div>');
+        $("#statsWindowStatsArea").append('<div class="statsWindowText">Highest level <span style="color: #F00;">Boss</span> kill:</div>');
+        $("#statsWindowStatValuesArea").append('<div id="statsWindowBossLevel" class="statsWindowText"></div>');
+    }
+    
+    function save() {
+        localStorage.endlessBossKills = bossKills;
+        localStorage.endlessBossLevel = bossLevel;
+    }
+    
+    function update() {
+        if (isUpdated) {
+            return;
+        }
+        $("#statsWindowBossKills").html(bossKills.formatMoney(0));
+        $("#statsWindowBossLevel").html(bossLevel.formatMoney(0));
+        isUpdated = true;
+    }
+    
+    function monsterKilled(monster) {
+        if (monster.rarity == MonsterRarity.BOSS) {
+            if (monster.level > bossLevel) {
+                bossLevel = monster.level;
+                isUpdated = false;
+            }
+            
+            if (monster.level === game.player.level) {
+                bossKills++;
+                isUpdated = false;
+            }
+        }
+    }
+}
+// Register
+monsterKillStats();
+// End bonus kill stats
+
 $("#optionsWindowOptionsArea").append('<div id="improvementOptionsTitle" class="optionsWindowOptionsTitle">Endless Improvement Options</div>');
 
-// Start MISC
+// Start MISC - Apparently we have no access to EndlessGame's formatMoney...
+Number.prototype.formatMoney = function(c, d, t) {
+var n = this, 
+    c = isNaN(c = Math.abs(c)) ? 2 : c, 
+    d = d == undefined ? "." : d, 
+    t = t == undefined ? "," : t, 
+    s = n < 0 ? "-" : "", 
+    i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", 
+    j = (j = i.length) > 3 ? j % 3 : 0;
+   return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+ }
+ 
 String.prototype.formatCapitalize = function() {
     return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
 };
