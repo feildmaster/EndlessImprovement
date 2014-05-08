@@ -350,7 +350,7 @@ function mercenaryHighlighting() {
         var newValue = 0;
         
         for (var curMercenary in MercenaryType) {
-            var curValue = getMercenaryCost(curMercenary) / game.mercenaryManager.getMercenaryBaseGps(curMercenary);
+            var curValue = game.mercenaryManager[curMercenary.toLowerCase() + 'Price'] / game.mercenaryManager.getMercenaryBaseGps(curMercenary);
             
             if (newMercenary == null || curValue < newValue) {
                 newMercenary = curMercenary;
@@ -369,23 +369,6 @@ function mercenaryHighlighting() {
     function removeHighlight() {
         if (currentMercenary) {
             getMercenaryElement(currentMercenary).css('color', '#fff');
-        }
-    }
-
-    function getMercenaryCost(type) {
-        switch (type) {
-        case MercenaryType.FOOTMAN:
-            return game.mercenaryManager.footmanPrice;
-        case MercenaryType.CLERIC:
-            return game.mercenaryManager.clericPrice;
-        case MercenaryType.COMMANDER:
-            return game.mercenaryManager.commanderPrice;
-        case MercenaryType.MAGE:
-            return game.mercenaryManager.magePrice;
-        case MercenaryType.THIEF:
-            return game.mercenaryManager.thiefPrice;
-        case MercenaryType.WARLOCK:
-            return game.mercenaryManager.warlockPrice;
         }
     }
 
