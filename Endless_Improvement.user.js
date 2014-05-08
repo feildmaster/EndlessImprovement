@@ -225,8 +225,7 @@ function autoSellLoot() {
         }
 
         // Add rarity options
-        for (var rarity in ItemRarity) {
-            if (rarity === 'count') continue;
+        for (var rarity in autoSellLoot) {
             $("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.autoSellOptionClick(\'' + rarity + '\')">' +
                 'Auto sell new <span style="color: ' + getItemColor(rarity) + '">' + rarity.formatCapitalize() + '</span> loot: ' +
                 '<span id="autoSellValue' + rarity.formatCapitalize() +'">OFF</span></div>');
