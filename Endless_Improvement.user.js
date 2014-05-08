@@ -199,7 +199,7 @@ function autoSellLoot() {
         LEGENDARY: false,
     };
 
-    new Improvement(init, load, save, null, reset).register();
+    new Improvement(init, load, save).register();
     
     function init() {
         // Create a new lootItem function, this saves needless calculations...
@@ -260,10 +260,6 @@ function autoSellLoot() {
         localStorage.endlessAutoSellLootRare = autoSellLoot.RARE;
         localStorage.endlessAutoSellLootEpic = autoSellLoot.EPIC;
         localStorage.endlessAutoSellLootLegendary = autoSellLoot.LEGENDARY;
-    }
-    
-    function reset() {
-        // TODO - ???
     }
     
     function sell(item) {
