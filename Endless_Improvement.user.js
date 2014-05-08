@@ -22,7 +22,11 @@ function ImprovementManager() {
     
     function doInit() {
         for (var i in improvements) {
-            improvements[i].onInit();
+            try {
+                improvements[i].onInit();
+            } catch (e) {
+                logError("init", e);
+            }
         }
         // EndlessGame loads after initializing... Do the same here (we don't hook into their initialize, yet!)
         doLoad();
@@ -30,27 +34,48 @@ function ImprovementManager() {
     
     function doLoad() {
         for (var i in improvements) {
-            improvements[i].onLoad();
+            try {
+                improvements[i].onLoad();
+            } catch (e) {
+                logError("load", e);
+            }
         }
     }
     
     function doSave() {
         for (var i in improvements) {
-            improvements[i].onSave();
+            try {
+                improvements[i].onSave();
+            } catch (e) {
+                logError("save", e);
+            }
         }
     }
     
     function doUpdate() {
         for (var i in improvements) {
-            improvements[i].onUpdate();
+            try {
+                improvements[i].onUpdate();
+            } catch (e) {
+                logError("update", e);
+            }
         }
     }
     
     function doReset() {
         // TODO: test resetting... and it's behavior
         for (var i in improvements) {
-            improvements[i].onReset();
+            try {
+                improvements[i].onReset();
+            } catch (e) {
+                logError("reset", e);
+            }
         }
+    }
+    
+    function logError(type, error) {
+        var fileName = error.fileName.slice(error.fileName.lastIndexOf("/") + 1);
+        console.log("Error when handling %s: [%s (%s:%d)]", type, error, fileName, error.lineNumber);
     }
     
     // Initiallize on page ready
