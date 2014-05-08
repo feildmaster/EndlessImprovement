@@ -383,7 +383,7 @@ function monsterKillStats() {
     var bossLevel = 0;
     var isUpdated = false;
 
-    new Improvement(init, load, save, update).register();
+    new Improvement(init, load, save, update, reset).register();
     
     function init() {
         // hook into monster damage function, has to be done every time a monster is created!
@@ -433,6 +433,12 @@ function monsterKillStats() {
         $("#statsWindowBossKills").html(bossKills.formatMoney(0));
         $("#statsWindowBossLevel").html(bossLevel.formatMoney(0));
         isUpdated = true;
+    }
+    
+    function reset() {
+        bossKills = 0;
+        bossLevel = 0;
+        isUpdated = false;
     }
     
     function monsterKilled(monster) {
