@@ -398,6 +398,10 @@ function monsterKillStats() {
             // Override it's takeDamage function
             var originalDamageFunction = newMonster.takeDamage;
             newMonster.takeDamage = function(damage) {
+                // Lets not continue if they're already dead
+                if (!newMonster.alive) {
+                    return;
+                }
                 originalDamageFunction.apply(newMonster, arguments);
                 // Yay, it was killed!
                 if (!newMonster.alive) {
