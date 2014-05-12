@@ -575,6 +575,89 @@ function monsterKillQuests() {
 monsterKillQuests();
 // End monster kill quests
 
+// Start DPS - inspired by FrozenBattle https://github.com/Craiel/FrozenBattle/
+function DPS() {
+    var damageDealt = 0;
+    var lastUpdate = 0;
+    var enabled = false;
+
+    new Improvement(init, load, save, update, reset).register();
+    
+    function init() {
+        addHooks();
+        
+        game.toggleDPSClick = function() {
+            enabled = !enabled;
+            updateOption();
+        }
+        
+        // Add option
+        $("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.toggleDPSClick()">' +
+            'Enable damage per second: <span id="dpsValue">OFF</span></div>');
+        // Add ugly bit for dps
+        $("#combatArea").append('<div id="dpsDisplay" style="position: absolute; top: 52px; left: 625px; font-family: \'Gentium Book Basic\'; font-size: 20px; color: #ffd800;text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;-moz-user-select: -moz-none;-khtml-user-select: none;-webkit-user-select: none;-ms-user-select: none;user-select: none;">' +
+            '<span id="dps">0</span> dps</div>');
+    }
+    
+    function load() {
+        if (localStorage.dpsEnabled) {
+            enabled = localStorage.dpsEnabled === "true";
+        }
+        
+        updateOption();
+    }
+    
+    function save() {
+        localStorage.dpsEnabled = enabled;
+    }
+    
+    function update() {
+        if (enabled && endlessImprovement.currentTime - lastUpdate > 1000) {
+            $("#dps").html(damageDealt === 0 ? 0 : damageDealt.formatMoney());
+            damageDealt = 0;
+            lastUpdate = endlessImprovement.currentTime;
+        }
+    }
+    
+    function reset() {
+        addHooks();
+    }
+    
+    function updateOption() {
+        $("#dpsValue").html(enabled ? "ON" : "OFF");
+        if (enabled) {
+            $("#dpsDisplay").show();
+        } else {
+            $("#dpsDisplay").hide();
+        }
+    }
+    
+    function addHooks() {
+        // hook into monster damage function, has to be done every time a monster is created!
+        var originalMonsterCreator = game.monsterCreator.createRandomMonster;
+        game.monsterCreator.createRandomMonster = function() {
+            // Create a monster
+            var newMonster = originalMonsterCreator.apply(game.monsterCreator, arguments);
+            // Override it's takeDamage function
+            var originalDamageFunction = newMonster.takeDamage;
+            newMonster.takeDamage = function(damage) {
+                // Lets not continue if they're already dead
+                if (!this.alive) {
+                    return;
+                }
+                originalDamageFunction.apply(this, arguments);
+                if (enabled) {
+                    damageDealt += this.lastDamageTaken;
+                }
+            }
+            
+            return newMonster;
+        }
+    }
+}
+DPS();
+// End DPS
+
 $("#optionsWindowOptionsArea").append('<div id="improvementOptionsTitle" class="optionsWindowOptionsTitle">Endless Improvement Options</div>');
 
 // Start MISC - Apparently we have no access to EndlessGame's formatMoney...
