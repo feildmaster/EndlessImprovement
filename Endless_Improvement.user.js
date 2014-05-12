@@ -378,8 +378,7 @@ mercenaryHighlighting();
 
 // Start bonus kill stats
 function monsterKillStats() {
-    // Todo: make these stats global... for quests!
-    var bossKills = 0;
+    endlessImprovement.bossKills = 0;
     var bossLevel = 0;
     var isUpdated = false;
 
@@ -410,8 +409,8 @@ function monsterKillStats() {
     }
     
     function load() {
-        if (!isNaN(localStorage.endlessBossKills)) {
-            bossKills = parseInt(localStorage.endlessBossKills);
+        if (localStorage.endlessBossKills) {
+            endlessImprovement.bossKills = parseInt(localStorage.endlessBossKills);
             bossLevel = parseInt(localStorage.endlessBossLevel);
         }
     
@@ -422,7 +421,7 @@ function monsterKillStats() {
     }
     
     function save() {
-        localStorage.endlessBossKills = bossKills;
+        localStorage.endlessBossKills = endlessImprovement.bossKills;
         localStorage.endlessBossLevel = bossLevel;
     }
     
@@ -430,13 +429,13 @@ function monsterKillStats() {
         if (isUpdated) {
             return;
         }
-        $("#statsWindowBossKills").html(bossKills.formatMoney(0));
+        $("#statsWindowBossKills").html(endlessImprovement.bossKills.formatMoney(0));
         $("#statsWindowBossLevel").html(bossLevel.formatMoney(0));
         isUpdated = true;
     }
     
     function reset() {
-        bossKills = 0;
+        endlessImprovement.bossKills = 0;
         bossLevel = 0;
         isUpdated = false;
     }
@@ -449,7 +448,7 @@ function monsterKillStats() {
             }
             
             if (monster.level === game.player.level) {
-                bossKills++;
+                endlessImprovement.bossKills++;
                 isUpdated = false;
             }
         }
@@ -458,6 +457,99 @@ function monsterKillStats() {
 // Register
 monsterKillStats();
 // End bonus kill stats
+
+// Start monster kill quests
+function monsterKillQuests() {
+    new Improvement(null, load, save, update, reset).register();
+    QuestType.ENDLESS_BOSSKILL  = "EndlessBossKill";
+    
+    // Last level it was awarded (Updates to current level even if it was rolled over from past level)
+    var killLevelAwarded = 0;
+    var hooked = false;
+    
+    function load() {
+        if (localStorage.endlessKillLevelAwarded) {
+            killLevelAwarded = parseInt(localStorage.endlessKillLevelAwarded);
+        }
+    }
+    
+    function save() {
+        localStorage.endlessKillLevelAwarded = killLevelAwarded;
+    }
+    
+    function update() {
+        // You can't gain this quest if you aren't at least level 30
+        if (game.player.level < 30) {
+            return;
+        }
+        // Create if needed
+        findOrCreate();
+        // update the quest status
+    }
+    
+    function reset() {
+        killLevelAwarded = 0;
+    }
+    
+    function findOrCreate() {
+        if (hooked) {
+            return;
+        }
+        var quest;
+        for (var x = game.questsManager.quests.length - 1; x >= 0; x--) {
+            var c = game.questsManager.quests[x];
+            if (c.type == QuestType.ENDLESS_BOSSKILL) {
+                quest = c;
+                hookBossKillQuest(quest);
+                break;
+            }
+        }
+        
+        if (!quest) { // Give the quest... if we can
+            addBossKillQuest();
+        }
+        
+        // Always set to current level
+        if (killLevelAwarded != game.player.level) {
+            killLevelAwarded = game.player.level;
+        }
+    }
+    
+    function addBossKillQuest() {
+        if (game.player.level >= 30 && killLevelAwarded < game.player.level) {
+            var name = "Kill a boss";
+            var description = "Kill a boss equal to your level, prove your worth!";
+            var quest = new Quest(name, description, QuestType.ENDLESS_BOSSKILL, 0, endlessImprovement.bossKills, 0, '10%');
+            hookBossKillQuest(quest);
+            game.questsManager.addQuest(quest);
+        }
+    }
+    
+    // The quest will be completely broken if this is NOT called correctly
+    function hookBossKillQuest(quest) {
+        if (hooked) {
+            return;
+        }
+        // overrides update and reward
+        quest.update = updateBossKillQuest;
+        quest.grantReward = rewardBossKillQuest;
+        // mark as hooked, so we don't do hook again
+        hooked = true;
+    }
+    
+    function updateBossKillQuest() {
+        // Complete if we have more kills than when this quest was made
+        this.complete = endlessImprovement.bossKills > this.typeAmount;
+    }
+    
+    function rewardBossKillQuest() {
+        game.player.gainExperience(Math.ceil(game.player.experienceRequired / 10), false);
+        game.stats.experienceFromQuests += game.player.lastExperienceGained;
+    }
+}
+// Register
+monsterKillQuests();
+// End monster kill quests
 
 $("#optionsWindowOptionsArea").append('<div id="improvementOptionsTitle" class="optionsWindowOptionsTitle">Endless Improvement Options</div>');
 
