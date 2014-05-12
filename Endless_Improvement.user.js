@@ -203,25 +203,11 @@ function autoSellLoot() {
         LEGENDARY: false,
     };
 
-    new Improvement(init, load, save).register();
+    new Improvement(init, load, save, null, reset).register();
     
     function init() {
-        // Create a new lootItem function, this saves needless calculations...
-        game.inventory.lootItem = function(item) {
-            for (var x = 0; x < game.inventory.maxSlots; x++) {
-                if (game.inventory.slots[x] == null) {
-                    // You can only sell what you can carry!
-                    if (autoSellLoot[item.rarity]) {
-                        sell(item);
-                    } else {
-                        game.inventory.slots[x] = item;
-                        $("#inventoryItem" + (x + 1)).css('background', ('url("/includes/images/itemSheet2.png") ' + item.iconSourceX + 'px ' + item.iconSourceY + 'px'));
-                    }
-                    game.stats.itemsLooted++;
-                    break;
-                }
-            }
-        }
+        addHooks();
+        
         // Add function to toggle selling ability
         game.autoSellOptionClick = function(option) {
             autoSellLoot[option] = !autoSellLoot[option];
@@ -266,6 +252,10 @@ function autoSellLoot() {
         localStorage.endlessAutoSellLootLegendary = autoSellLoot.LEGENDARY;
     }
     
+    function reset() {
+        addHooks();
+    }
+    
     function sell(item) {
         // Get the sell value and give the gold to the player; don't use the gainGold function as it will include gold gain bonuses
         var value = item.sellValue;
@@ -273,6 +263,25 @@ function autoSellLoot() {
         // Increase stats!
         game.stats.itemsSold++;
         game.stats.goldFromItems += value;
+    }
+    
+    function addHooks() {
+        // Create a new lootItem function, this saves needless calculations...
+        game.inventory.lootItem = function(item) {
+            for (var x = 0; x < game.inventory.maxSlots; x++) {
+                if (game.inventory.slots[x] == null) {
+                    // You can only sell what you can carry!
+                    if (autoSellLoot[item.rarity]) {
+                        sell(item);
+                    } else {
+                        game.inventory.slots[x] = item;
+                        $("#inventoryItem" + (x + 1)).css('background', ('url("/includes/images/itemSheet2.png") ' + item.iconSourceX + 'px ' + item.iconSourceY + 'px'));
+                    }
+                    game.stats.itemsLooted++;
+                    break;
+                }
+            }
+        }
     }
     
     function updateValue(option) {
@@ -298,21 +307,10 @@ function mercenaryHighlighting() {
     var enableHighlight = true;
     var currentMercenary = null;
     
-    new Improvement(init, load, save).register();
+    new Improvement(init, load, save, null, reset).register();
     
     function init() {
-        var originalPurchaseMercenary = game.mercenaryManager.purchaseMercenary;
-        game.mercenaryManager.purchaseMercenary = function(type) {
-            originalPurchaseMercenary.apply(game.mercenaryManager, arguments);
-            highlightMostEfficientMercenary();
-        }
-        
-        // Re-calculate after buying an upgrade
-        var originalPurchaseUpgrade = game.upgradeManager.purchaseUpgrade;
-        game.upgradeManager.purchaseUpgrade = function(id) {
-            originalPurchaseUpgrade.apply(game.upgradeManager, arguments);
-            highlightMostEfficientMercenary();
-        }
+        addHooks();
         
         // Add function to toggle mercenary highlighting
         game.highlightBestMercenaryClick = function() {
@@ -334,6 +332,25 @@ function mercenaryHighlighting() {
     
     function save() {
         localStorage.endlessEnableHighlight = enableHighlight;
+    }
+    
+    function reset() {
+        addHooks();
+    }
+    
+    function addHooks() {
+        var originalPurchaseMercenary = game.mercenaryManager.purchaseMercenary;
+        game.mercenaryManager.purchaseMercenary = function(type) {
+            originalPurchaseMercenary.apply(game.mercenaryManager, arguments);
+            highlightMostEfficientMercenary();
+        }
+        
+        // Re-calculate after buying an upgrade
+        var originalPurchaseUpgrade = game.upgradeManager.purchaseUpgrade;
+        game.upgradeManager.purchaseUpgrade = function(id) {
+            originalPurchaseUpgrade.apply(game.upgradeManager, arguments);
+            highlightMostEfficientMercenary();
+        }
     }
     
     function updateOption() {
@@ -389,27 +406,7 @@ function monsterKillStats() {
     new Improvement(init, load, save, update, reset).register();
     
     function init() {
-        // hook into monster damage function, has to be done every time a monster is created!
-        var originalMonsterCreator = game.monsterCreator.createRandomMonster;
-        game.monsterCreator.createRandomMonster = function() {
-            // Create a monster
-            var newMonster = originalMonsterCreator.apply(game.monsterCreator, arguments);
-            // Override it's takeDamage function
-            var originalDamageFunction = newMonster.takeDamage;
-            newMonster.takeDamage = function(damage) {
-                // Lets not continue if they're already dead
-                if (!newMonster.alive) {
-                    return;
-                }
-                originalDamageFunction.apply(newMonster, arguments);
-                // Yay, it was killed!
-                if (!newMonster.alive) {
-                    monsterKilled(newMonster);
-                }
-            }
-            
-            return newMonster;
-        }
+        addHooks();
     }
     
     function load() {
@@ -442,6 +439,7 @@ function monsterKillStats() {
         endlessImprovement.bossKills = 0;
         bossLevel = 0;
         isUpdated = false;
+        addHooks();
     }
     
     function monsterKilled(monster) {
@@ -455,6 +453,30 @@ function monsterKillStats() {
                 endlessImprovement.bossKills++;
                 isUpdated = false;
             }
+        }
+    }
+    
+    function addHooks() {
+        // hook into monster damage function, has to be done every time a monster is created!
+        var originalMonsterCreator = game.monsterCreator.createRandomMonster;
+        game.monsterCreator.createRandomMonster = function() {
+            // Create a monster
+            var newMonster = originalMonsterCreator.apply(game.monsterCreator, arguments);
+            // Override it's takeDamage function
+            var originalDamageFunction = newMonster.takeDamage;
+            newMonster.takeDamage = function(damage) {
+                // Lets not continue if they're already dead
+                if (!newMonster.alive) {
+                    return;
+                }
+                originalDamageFunction.apply(newMonster, arguments);
+                // Yay, it was killed!
+                if (!newMonster.alive) {
+                    monsterKilled(newMonster);
+                }
+            }
+            
+            return newMonster;
         }
     }
 }
@@ -493,6 +515,7 @@ function monsterKillQuests() {
     
     function reset() {
         killLevelAwarded = 0;
+        hooked = false;
     }
     
     function findOrCreate() {
