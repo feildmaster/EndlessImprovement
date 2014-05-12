@@ -3,7 +3,7 @@
 // @description Script dedicated to improving kruv's endless battle browser game
 // @namespace   http://feildmaster.com/
 // @include     http://www.kruv.net/endlessBattle.html
-// @version     1.2
+// @version     1.2.1
 // @updateURL   https://raw.githubusercontent.com/feildmaster/EndlessImprovement/master/Endless_Improvement.meta.js
 // @grant       none
 // ==/UserScript==
@@ -63,7 +63,6 @@ function ImprovementManager() {
     }
     
     function doReset() {
-        // TODO: test resetting... and it's behavior
         for (var i in improvements) {
             try {
                 improvements[i].onReset();
@@ -98,16 +97,21 @@ function ImprovementManager() {
     
     // Add update hook - we hook into tutorial manager as it is called last, 
     var originalUpdate = game.tutorialManager.update;
-    game.tutorialManager.update = function() {
-        originalUpdate.apply(game.tutorialManager);
-        doUpdate();
-    }
+    game.tutorialManager.update = updateHook;
     
     // Add reset hook
     var originalReset = game.reset;
     game.reset = function() {
         originalReset.apply(game);
+        // We need to readd the update hook... because the game makes a new manager
+        originalUpdate = game.tutorialManager.update;
+        game.tutorialManager.update = updateHook;
         doReset();
+    }
+    
+    function updateHook() {
+        originalUpdate.apply(game.tutorialManager);
+        doUpdate();
     }
 }
 
