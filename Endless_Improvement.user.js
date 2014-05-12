@@ -5,6 +5,7 @@
 // @include     http://www.kruv.net/endlessBattle.html
 // @version     1.4.pre
 // @updateURL   https://raw.githubusercontent.com/feildmaster/EndlessImprovement/release/Endless_Improvement.meta.js
+// @downloadURL https://raw.githubusercontent.com/feildmaster/EndlessImprovement/release/Endless_Improvement.user.js
 // @grant       none
 // ==/UserScript==
 
