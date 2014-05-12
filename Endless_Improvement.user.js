@@ -12,6 +12,7 @@
 var endlessImprovement = game.endlessImprovement = new ImprovementManager();
 
 function ImprovementManager() {
+    this.currentTime = 0; // Is updated on updates
     var improvements = new Array(); // PRIVATE-NESS
     
     this.add = function(improvement) {
@@ -95,23 +96,19 @@ function ImprovementManager() {
         doSave();
     }
     
-    // Add update hook - we hook into tutorial manager as it is called last, 
-    var originalUpdate = game.tutorialManager.update;
-    game.tutorialManager.update = updateHook;
+    // Add update hook - use of unsafeWindow is bad. :(
+    var originalUpdate = unsafeWindow.update;
+    unsafeWindow.update = function() {
+        endlessImprovement.currentTime = Date.now();
+        originalUpdate();
+        doUpdate();
+    }
     
     // Add reset hook
     var originalReset = game.reset;
     game.reset = function() {
         originalReset.apply(game);
-        // We need to readd the update hook... because the game makes a new manager
-        originalUpdate = game.tutorialManager.update;
-        game.tutorialManager.update = updateHook;
         doReset();
-    }
-    
-    function updateHook() {
-        originalUpdate.apply(game.tutorialManager);
-        doUpdate();
     }
 }
 
