@@ -322,7 +322,9 @@ function mercenaryHighlighting() {
     }
     
     function load() {
-        enableHighlight = localStorage.endlessEnableHighlight === 'true';
+        if (localStorage.endlessEnableHighlight) {
+            enableHighlight = localStorage.endlessEnableHighlight === 'true';
+        }
         updateOption(); // Lets update on load, for lack of better place (only needs to do this once...)
         highlightMostEfficientMercenary(); // Run once on load
     }
