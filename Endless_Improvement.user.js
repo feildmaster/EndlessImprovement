@@ -14,13 +14,13 @@ var endlessImprovement = game.endlessImprovement = new ImprovementManager();
 function ImprovementManager() {
     this.currentTime = 0; // Is updated on updates
     var improvements = new Array(); // PRIVATE-NESS
-    
+
     this.add = function(improvement) {
         if (improvement instanceof Improvement) {
             improvements.push(improvement);
         }
     }
-    
+
     function doInit() {
         for (var i in improvements) {
             try {
@@ -32,7 +32,7 @@ function ImprovementManager() {
         // EndlessGame loads after initializing... Do the same here (we don't hook into their initialize, yet!)
         doLoad();
     }
-    
+
     function doLoad() {
         for (var i in improvements) {
             try {
@@ -42,7 +42,7 @@ function ImprovementManager() {
             }
         }
     }
-    
+
     function doSave() {
         for (var i in improvements) {
             try {
@@ -52,7 +52,7 @@ function ImprovementManager() {
             }
         }
     }
-    
+
     function doUpdate() {
         for (var i in improvements) {
             try {
@@ -62,7 +62,7 @@ function ImprovementManager() {
             }
         }
     }
-    
+
     function doReset() {
         for (var i in improvements) {
             try {
@@ -72,15 +72,15 @@ function ImprovementManager() {
             }
         }
     }
-    
+
     function logError(type, error) {
         var fileName = error.fileName.slice(error.fileName.lastIndexOf("/") + 1);
         console.log("Error when handling %s: [%s (%s:%d)]", type, error, fileName, error.lineNumber);
     }
-    
+
     // Initiallize on page ready
     $(doInit);
-    
+
     /* Add load hook - This is not needed yet, we call load on our initialize
     var originalLoad = game.load;
     game.load = function() {
@@ -88,14 +88,14 @@ function ImprovementManager() {
         doLoad();
     }
     // */
-    
+
     // Add save hook
     var originalSave = game.save;
     game.save = function() {
         originalSave.apply(game);
         doSave();
     }
-    
+
     // Add update hook - use of unsafeWindow is bad. :(
     var originalUpdate = unsafeWindow.update;
     unsafeWindow.update = function() {
@@ -103,7 +103,7 @@ function ImprovementManager() {
         originalUpdate();
         doUpdate();
     }
-    
+
     // Add reset hook
     var originalReset = game.reset;
     game.reset = function() {
@@ -114,7 +114,7 @@ function ImprovementManager() {
 
 function Improvement(init, load, save, update, reset) {
     this.onInit = function() {
-        if (typeof init === 'function') { 
+        if (typeof init === 'function') {
             init();
         }
     }
@@ -148,11 +148,11 @@ Improvement.prototype.register = function() {
 // Start fix health - remove when fixed live
 function fixHealth() {
     new Improvement(init).register();
-    
+
     function init() {
         game.player.baseHealthLevelUpBonus = 0;
         game.player.baseHp5LevelUpBonus = 0;
-            
+
         // Add stats to the player for leveling up, use the "broken" algorithm people expect.
         for (var x = 1; x < game.player.level; x++) {
             game.player.baseHealthLevelUpBonus += Math.floor(game.player.healthLevelUpBonusBase * (Math.pow(1.15, x)));
@@ -167,17 +167,17 @@ fixHealth();
 // Start stats window improvement - only update when the window is open!
 function statWindowImprovement() {
     new Improvement(init).register();
-    
+
     function init() {
         var statsWindowShowing = false;
-        
+
         $("#stats").mousedown(function() {
             statsWindowShowing = true;
         });
         $("#statsWindowExitButton").mousedown(function() {
             statsWindowShowing = false;
         });
-        
+
         var originalStatsUpdate = game.stats.update;
         game.stats.update = function() {
             if (statsWindowShowing) {
@@ -201,10 +201,10 @@ function autoSellLoot() {
     };
 
     new Improvement(init, load, save, null, reset).register();
-    
+
     function init() {
         addHooks();
-        
+
         // Add function to toggle selling ability
         game.autoSellOptionClick = function(option) {
             autoSellLoot[option] = !autoSellLoot[option];
@@ -218,7 +218,7 @@ function autoSellLoot() {
                 '<span id="autoSellValue' + rarity.formatCapitalize() +'">OFF</span></div>');
         }
     }
-    
+
     function load() {
         autoSellLoot.COMMON = localStorage.endlessAutoSellLootCommon === 'true';
         autoSellLoot.UNCOMMON = localStorage.endlessAutoSellLootUncommon === 'true';
@@ -235,12 +235,12 @@ function autoSellLoot() {
             }
         }
         for (var rarity in ItemRarity) {
-            if (rarity !== 'count') {   
+            if (rarity !== 'count') {
                 updateValue(rarity);
             }
         }
     }
-    
+
     function save() {
         localStorage.endlessAutoSellLootCommon = autoSellLoot.COMMON;
         localStorage.endlessAutoSellLootUncommon = autoSellLoot.UNCOMMON;
@@ -248,11 +248,11 @@ function autoSellLoot() {
         localStorage.endlessAutoSellLootEpic = autoSellLoot.EPIC;
         localStorage.endlessAutoSellLootLegendary = autoSellLoot.LEGENDARY;
     }
-    
+
     function reset() {
         addHooks();
     }
-    
+
     function sell(item) {
         // Get the sell value and give the gold to the player; don't use the gainGold function as it will include gold gain bonuses
         var value = item.sellValue;
@@ -261,7 +261,7 @@ function autoSellLoot() {
         game.stats.itemsSold++;
         game.stats.goldFromItems += value;
     }
-    
+
     function addHooks() {
         // Create a new lootItem function, this saves needless calculations...
         game.inventory.lootItem = function(item) {
@@ -280,18 +280,23 @@ function autoSellLoot() {
             }
         }
     }
-    
+
     function updateValue(option) {
         $("#autoSellValue" + option.formatCapitalize()).html(autoSellLoot[option]?"ON":"OFF");
     }
-    
+
     function getItemColor(type) {
         switch (type) {
-            case ItemRarity.COMMON: return "#fff";
-            case ItemRarity.UNCOMMON: return "#00ff05";
-            case ItemRarity.RARE: return "#0005ff";
-            case ItemRarity.EPIC: return "#b800af";
-            case ItemRarity.LEGENDARY: return "#ff6a00";
+            case ItemRarity.COMMON:
+                return "#fff";
+            case ItemRarity.UNCOMMON:
+                return "#00ff05";
+            case ItemRarity.RARE:
+                return "#0005ff";
+            case ItemRarity.EPIC:
+                return "#b800af";
+            case ItemRarity.LEGENDARY:
+                return "#ff6a00";
         }
     }
 }
@@ -303,24 +308,24 @@ autoSellLoot();
 function mercenaryHighlighting() {
     var enableHighlight = true;
     var currentMercenary = null;
-    
+
     new Improvement(init, load, save, null, reset).register();
-    
+
     function init() {
         addHooks();
-        
+
         // Add function to toggle mercenary highlighting
         game.highlightBestMercenaryClick = function() {
             enableHighlight = !enableHighlight;
             highlightMostEfficientMercenary();
             updateOption();
         }
-        
+
         // Add option to toggle mercenary highlighting
         $("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.highlightBestMercenaryClick()">' +
             '<span style="color: #ffff00;">Highlight</span> most cost efficient mercenary: <span id="highlightMercenaryValue">ON</span></div>');
     }
-    
+
     function load() {
         if (localStorage.endlessEnableHighlight) {
             enableHighlight = localStorage.endlessEnableHighlight === 'true';
@@ -328,22 +333,22 @@ function mercenaryHighlighting() {
         updateOption(); // Lets update on load, for lack of better place (only needs to do this once...)
         highlightMostEfficientMercenary(); // Run once on load
     }
-    
+
     function save() {
         localStorage.endlessEnableHighlight = enableHighlight;
     }
-    
+
     function reset() {
         addHooks();
     }
-    
+
     function addHooks() {
         var originalPurchaseMercenary = game.mercenaryManager.purchaseMercenary;
         game.mercenaryManager.purchaseMercenary = function(type) {
             originalPurchaseMercenary.apply(game.mercenaryManager, arguments);
             highlightMostEfficientMercenary();
         }
-        
+
         // Re-calculate after buying an upgrade
         var originalPurchaseUpgrade = game.upgradeManager.purchaseUpgrade;
         game.upgradeManager.purchaseUpgrade = function(id) {
@@ -351,7 +356,7 @@ function mercenaryHighlighting() {
             highlightMostEfficientMercenary();
         }
     }
-    
+
     function updateOption() {
         $("#highlightMercenaryValue").html(enableHighlight?"ON":"OFF");
     }
@@ -364,19 +369,19 @@ function mercenaryHighlighting() {
         }
         var newMercenary;
         var newValue = 0;
-        
+
         for (var curMercenary in MercenaryType) {
             var curValue = game.mercenaryManager[curMercenary.toLowerCase() + 'Price'] / game.mercenaryManager.getMercenaryBaseGps(curMercenary);
-            
+
             if (newMercenary == null || curValue < newValue) {
                 newMercenary = curMercenary;
                 newValue = curValue;
             }
         }
-        
+
         // Only update if changed
         if (currentMercenary != newMercenary) {
-            removeHighlight(); 
+            removeHighlight();
             currentMercenary = newMercenary;
             getMercenaryElement(newMercenary).css('color', '#ffff00');
         }
@@ -403,28 +408,28 @@ function monsterKillStats() {
     var isUpdated = false;
 
     new Improvement(init, load, save, update, reset).register();
-    
+
     function init() {
         addHooks();
     }
-    
+
     function load() {
         if (localStorage.endlessBossKills) {
             endlessImprovement.bossKills = parseInt(localStorage.endlessBossKills);
             bossLevel = parseInt(localStorage.endlessBossLevel);
         }
-    
+
         $("#statsWindowStatsArea").append('<div class="statsWindowText"><span style="color: #F00;">Boss</span> kills at player level:</div>');
         $("#statsWindowStatValuesArea").append('<div id="statsWindowBossKills" class="statsWindowText"></div>');
         $("#statsWindowStatsArea").append('<div class="statsWindowText">Highest level <span style="color: #F00;">Boss</span> kill:</div>');
         $("#statsWindowStatValuesArea").append('<div id="statsWindowBossLevel" class="statsWindowText"></div>');
     }
-    
+
     function save() {
         localStorage.endlessBossKills = endlessImprovement.bossKills;
         localStorage.endlessBossLevel = bossLevel;
     }
-    
+
     function update() {
         if (isUpdated) {
             return;
@@ -433,28 +438,28 @@ function monsterKillStats() {
         $("#statsWindowBossLevel").html(bossLevel.formatMoney(0));
         isUpdated = true;
     }
-    
+
     function reset() {
         endlessImprovement.bossKills = 0;
         bossLevel = 0;
         isUpdated = false;
         addHooks();
     }
-    
+
     function monsterKilled(monster) {
         if (monster.rarity == MonsterRarity.BOSS) {
             if (monster.level > bossLevel) {
                 bossLevel = monster.level;
                 isUpdated = false;
             }
-            
+
             if (monster.level === game.player.level) {
                 endlessImprovement.bossKills++;
                 isUpdated = false;
             }
         }
     }
-    
+
     function addHooks() {
         // hook into monster damage function, has to be done every time a monster is created!
         var originalMonsterCreator = game.monsterCreator.createRandomMonster;
@@ -474,7 +479,7 @@ function monsterKillStats() {
                     monsterKilled(newMonster);
                 }
             }
-            
+
             return newMonster;
         }
     }
@@ -487,21 +492,21 @@ monsterKillStats();
 function monsterKillQuests() {
     new Improvement(null, load, save, update, reset).register();
     QuestType.ENDLESS_BOSSKILL  = "EndlessBossKill";
-    
+
     // Last level it was awarded (Updates to current level even if it was rolled over from past level)
     var killLevelAwarded = 0;
     var hooked = false;
-    
+
     function load() {
         if (localStorage.endlessKillLevelAwarded) {
             killLevelAwarded = parseInt(localStorage.endlessKillLevelAwarded);
         }
     }
-    
+
     function save() {
         localStorage.endlessKillLevelAwarded = killLevelAwarded;
     }
-    
+
     function update() {
         // You can't gain this quest if you aren't at least level 30
         if (game.player.level < 30) {
@@ -509,14 +514,13 @@ function monsterKillQuests() {
         }
         // Create if needed
         findOrCreate();
-        // update the quest status
     }
-    
+
     function reset() {
         killLevelAwarded = 0;
         hooked = false;
     }
-    
+
     function findOrCreate() {
         if (hooked) {
             return;
@@ -530,17 +534,17 @@ function monsterKillQuests() {
                 break;
             }
         }
-        
+
         if (!quest) { // Give the quest... if we can
             addBossKillQuest();
         }
-        
+
         // Always set to current level
         if (killLevelAwarded != game.player.level) {
             killLevelAwarded = game.player.level;
         }
     }
-    
+
     function addBossKillQuest() {
         if (game.player.level >= 30 && killLevelAwarded < game.player.level) {
             var name = "Kill a boss";
@@ -550,7 +554,7 @@ function monsterKillQuests() {
             game.questsManager.addQuest(quest);
         }
     }
-    
+
     // The quest will be completely broken if this is NOT called correctly
     function hookBossKillQuest(quest) {
         if (hooked) {
@@ -562,12 +566,12 @@ function monsterKillQuests() {
         // mark as hooked, so we don't do hook again
         hooked = true;
     }
-    
+
     function updateBossKillQuest() {
         // Complete if we have more kills than when this quest was made
         this.complete = endlessImprovement.bossKills > this.typeAmount;
     }
-    
+
     function rewardBossKillQuest() {
         game.player.gainExperience(Math.ceil(game.player.experienceRequired / 10), false);
         game.stats.experienceFromQuests += game.player.lastExperienceGained;
@@ -584,15 +588,15 @@ function DPS() {
     var enabled = false;
 
     new Improvement(init, load, save, update, reset).register();
-    
+
     function init() {
         addHooks();
-        
+
         game.toggleDPSClick = function() {
             enabled = !enabled;
             updateOption();
         }
-        
+
         // Add option
         $("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.toggleDPSClick()">' +
             'Enable damage per second: <span id="dpsValue">OFF</span></div>');
@@ -600,19 +604,19 @@ function DPS() {
         $("#combatArea").append('<div id="dpsDisplay" style="position: absolute; top: 52px; left: 625px; font-family: \'Gentium Book Basic\'; font-size: 20px; color: #ffd800;text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;-moz-user-select: -moz-none;-khtml-user-select: none;-webkit-user-select: none;-ms-user-select: none;user-select: none;">' +
             '<span id="dps">0</span> dps</div>');
     }
-    
+
     function load() {
         if (localStorage.dpsEnabled) {
             enabled = localStorage.dpsEnabled === "true";
         }
-        
+
         updateOption();
     }
-    
+
     function save() {
         localStorage.dpsEnabled = enabled;
     }
-    
+
     function update() {
         if (enabled && endlessImprovement.currentTime - lastUpdate > 1000) {
             $("#dps").html(damageDealt === 0 ? 0 : damageDealt.formatMoney());
@@ -620,11 +624,11 @@ function DPS() {
             lastUpdate = endlessImprovement.currentTime;
         }
     }
-    
+
     function reset() {
         addHooks();
     }
-    
+
     function updateOption() {
         $("#dpsValue").html(enabled ? "ON" : "OFF");
         if (enabled) {
@@ -633,7 +637,7 @@ function DPS() {
             $("#dpsDisplay").hide();
         }
     }
-    
+
     function addHooks() {
         // hook into monster damage function, has to be done every time a monster is created!
         var originalMonsterCreator = game.monsterCreator.createRandomMonster;
@@ -652,7 +656,7 @@ function DPS() {
                     damageDealt += this.lastDamageTaken;
                 }
             }
-            
+
             return newMonster;
         }
     }
@@ -664,16 +668,16 @@ $("#optionsWindowOptionsArea").append('<div id="improvementOptionsTitle" class="
 
 // Start MISC - Apparently we have no access to EndlessGame's formatMoney...
 Number.prototype.formatMoney = function(c, d, t) {
-var n = this, 
-    c = isNaN(c = Math.abs(c)) ? 2 : c, 
-    d = d == undefined ? "." : d, 
-    t = t == undefined ? "," : t, 
-    s = n < 0 ? "-" : "", 
-    i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", 
+    var n = this,
+    s = n < 0 ? "-" : "",
+    i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "",
     j = (j = i.length) > 3 ? j % 3 : 0;
-   return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
- }
- 
+    c = isNaN(c = Math.abs(c)) ? 2 : c;
+    d = d == undefined ? "." : d;
+    t = t == undefined ? "," : t;
+    return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+}
+
 String.prototype.formatCapitalize = function() {
     return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
 };
