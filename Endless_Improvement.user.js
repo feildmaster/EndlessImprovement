@@ -498,7 +498,6 @@ function monsterKillQuests() {
 
     // Last level it was awarded (Updates to current level even if it was rolled over from past level)
     var killLevelAwarded = 0;
-    var hooked = false;
 
     function load() {
         if (localStorage.endlessKillLevelAwarded) {
@@ -521,13 +520,9 @@ function monsterKillQuests() {
 
     function reset() {
         killLevelAwarded = 0;
-        hooked = false;
     }
 
     function findOrCreate() {
-        if (hooked) {
-            return;
-        }
         var quest;
         for (var x = game.questsManager.quests.length - 1; x >= 0; x--) {
             var c = game.questsManager.quests[x];
@@ -560,14 +555,14 @@ function monsterKillQuests() {
 
     // The quest will be completely broken if this is NOT called correctly
     function hookBossKillQuest(quest) {
-        if (hooked) {
+        if (quest.hooked) {
             return;
         }
         // overrides update and reward
         quest.update = updateBossKillQuest;
         quest.grantReward = rewardBossKillQuest;
         // mark as hooked, so we don't do hook again
-        hooked = true;
+        quest.hooked = true;
     }
 
     function updateBossKillQuest() {
