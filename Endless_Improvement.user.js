@@ -17,17 +17,18 @@ var endlessImprovement = game.endlessImprovement = new ImprovementManager();
 function ImprovementManager() {
     this.currentTime = 0; // Is updated on updates
     var improvements = new Array(); // PRIVATE-NESS
+    var pending = new Array();
 
     this.add = function(improvement) {
         if (improvement instanceof Improvement) {
-            improvements.push(improvement);
+            pending.push(improvement);
         }
     }
 
     function doInit() {
-        for (var i in improvements) {
+        for (var i in pending) {
             try {
-                improvements[i].onInit();
+                pending[i].onInit();
             } catch (e) {
                 logError("init", e);
             }
@@ -37,9 +38,11 @@ function ImprovementManager() {
     }
 
     function doLoad() {
-        for (var i in improvements) {
+        while (pending.length > 0) {
+            var improvement = pending.pop();
             try {
-                improvements[i].onLoad();
+                improvement.onLoad();
+                improvements.push(improvement);
             } catch (e) {
                 logError("load", e);
             }
@@ -63,6 +66,10 @@ function ImprovementManager() {
             } catch (e) {
                 logError("update", e);
             }
+        }
+        // Check for pending improvements
+        if (pending.length > 0) {
+            doInit();
         }
     }
 
@@ -100,17 +107,36 @@ function ImprovementManager() {
     }
 
     // Add update hook - use of unsafeWindow is bad. :(
-    var originalUpdate = unsafeWindow.update;
-    unsafeWindow.update = function() {
-        endlessImprovement.currentTime = Date.now();
-        originalUpdate();
-        doUpdate();
+    var unsafeDefined = 'undefined' !== typeof unsafeWindow;
+    var originalUpdate = unsafeDefined ? unsafeWindow.update : game.tutorialManager.update;
+    
+    if (unsafeDefined) {
+        unsafeWindow.update = function() {
+            endlessImprovement.currentTime = Date.now();
+            originalUpdate();
+            doUpdate();
+        }
+    } else {
+        game.tutorialManager.update = function() {
+            endlessImprovement.currentTime = Date.now();
+            originalUpdate.apply(game.tutorialManager);
+            doUpdate();
+        }
     }
 
     // Add reset hook
     var originalReset = game.reset;
     game.reset = function() {
         originalReset.apply(game);
+        if (!unsafeDefined) {
+            // We need to readd the update hook... because the game makes a new manager
+            originalUpdate = game.tutorialManager.update;
+            game.tutorialManager.update = function() {
+                endlessImprovement.currentTime = Date.now();
+                originalUpdate.apply(game.tutorialManager);
+                doUpdate();
+            }
+        }
         doReset();
     }
 }
