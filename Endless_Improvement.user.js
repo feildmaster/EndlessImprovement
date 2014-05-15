@@ -645,6 +645,12 @@ function DPS() {
         if (enabled && endlessImprovement.currentTime - lastUpdate > 1000) {
             $("#dps").html(damageDealt === 0 ? 0 : damageDealt.formatMoney());
             damageDealt = 0;
+            
+            // Center the dps... :3
+            var dps = $("#dpsDisplay");
+            var pix = 625 - dps.width() / 2;
+            dps.css('left', pix + 'px');
+            
             lastUpdate = endlessImprovement.currentTime;
         }
     }
