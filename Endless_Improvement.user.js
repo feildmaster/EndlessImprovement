@@ -91,52 +91,25 @@ function ImprovementManager() {
     // Initiallize on page ready
     $(doInit);
 
-    /* Add load hook - This is not needed yet, we call load on our initialize
-    var originalLoad = game.load;
-    game.load = function() {
-        originalLoad.apply(game);
-        doLoad();
-    }
-    // */
-
     // Add save hook
     var originalSave = game.save;
     game.save = function() {
-        originalSave.apply(game);
+        originalSave.apply(this);
         doSave();
     }
 
-    // Add update hook - use of unsafeWindow is bad. :(
-    var unsafeDefined = 'undefined' !== typeof unsafeWindow;
-    var originalUpdate = unsafeDefined ? unsafeWindow.update : game.tutorialManager.update;
-    
-    if (unsafeDefined) {
-        unsafeWindow.update = function() {
-            endlessImprovement.currentTime = Date.now();
-            originalUpdate();
-            doUpdate();
-        }
-    } else {
-        game.tutorialManager.update = function() {
-            endlessImprovement.currentTime = Date.now();
-            originalUpdate.apply(game.tutorialManager);
-            doUpdate();
-        }
+    // Add update hook
+    var originalUpdate = game.update;
+    game.update = function() {
+        endlessImprovement.currentTime = Date.now();
+        originalUpdate.apply(this);
+        doUpdate();
     }
 
     // Add reset hook
     var originalReset = game.reset;
     game.reset = function() {
-        originalReset.apply(game);
-        if (!unsafeDefined) {
-            // We need to readd the update hook... because the game makes a new manager
-            originalUpdate = game.tutorialManager.update;
-            game.tutorialManager.update = function() {
-                endlessImprovement.currentTime = Date.now();
-                originalUpdate.apply(game.tutorialManager);
-                doUpdate();
-            }
-        }
+        originalReset.apply(this);
         doReset();
     }
 }
@@ -174,26 +147,8 @@ Improvement.prototype.register = function() {
 }
 // End core infrastructure
 
-// Start fix health - remove when fixed live
-function fixHealth() {
-    new Improvement(init).register();
-
-    function init() {
-        game.player.baseHealthLevelUpBonus = 0;
-        game.player.baseHp5LevelUpBonus = 0;
-
-        // Add stats to the player for leveling up, use the "broken" algorithm people expect.
-        for (var x = 1; x < game.player.level; x++) {
-            game.player.baseHealthLevelUpBonus += Math.floor(game.player.healthLevelUpBonusBase * (Math.pow(1.15, x)));
-            game.player.baseHp5LevelUpBonus += Math.floor(game.player.hp5LevelUpBonusBase * (Math.pow(1.15, x)));
-        }
-    }
-}
-// Register
-fixHealth();
-// End fix health
-
 // Start stats window improvement - only update when the window is open!
+// TODO: This is now harder to do. :( (Toggle)
 function statWindowImprovement() {
     new Improvement(init).register();
 
@@ -216,72 +171,28 @@ function statWindowImprovement() {
     }
 }
 // Register
-statWindowImprovement();
+// statWindowImprovement();
 // End stats window improvement
 
-// Start auto selling loot
+// Start auto selling loot - TODO: consider if needed anymore
 function autoSellLoot() {
-    var autoSellLoot = {
-        COMMON: false,
-        UNCOMMON: false,
-        RARE: false,
-        EPIC: false,
-        LEGENDARY: false,
-    };
-
-    new Improvement(init, load, save, null, reset).register();
+    new Improvement(init, load, null, null, reset).register();
 
     function init() {
         addHooks();
-
-        // Add function to toggle selling ability
-        game.autoSellOptionClick = function(option) {
-            autoSellLoot[option] = !autoSellLoot[option];
-            updateValue(option);
-        }
-
-        // Add rarity options
-        for (var rarity in autoSellLoot) {
-            $("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.autoSellOptionClick(\'' + rarity + '\')">' +
-                'Auto sell new <span style="color: ' + getItemColor(rarity) + '">' + rarity.formatCapitalize() + '</span> loot: ' +
-                '<span id="autoSellValue' + rarity.formatCapitalize() +'">OFF</span></div>');
-        }
     }
 
     function load() {
-        autoSellLoot.COMMON = localStorage.endlessAutoSellLootCommon === 'true';
-        autoSellLoot.UNCOMMON = localStorage.endlessAutoSellLootUncommon === 'true';
-        autoSellLoot.RARE = localStorage.endlessAutoSellLootRare === 'true';
-        autoSellLoot.EPIC = localStorage.endlessAutoSellLootEpic === 'true';
-        autoSellLoot.LEGENDARY = localStorage.endlessAutoSellLootLegendary === 'true';
-        var autoSell = localStorage.autoSellLoot;
-        if (typeof(autoSell) !== "undefined") {
-            localStorage.removeItem('autoSellLoot');
-            if (autoSell === 'true') {
-                autoSellLoot.COMMON = true;
-                autoSellLoot.UNCOMMON = true;
-                autoSellLoot.RARE = true;
-            }
+        if (localStorage.endlessAutoSellLootCommon) {
+            localStorage.removeItem('endlessAutoSellLootCommon');
+            localStorage.removeItem('endlessAutoSellLootRare');
+            localStorage.removeItem('endlessAutoSellLootUncommon');
+            localStorage.removeItem('endlessAutoSellLootEpic');
+            localStorage.removeItem('endlessAutoSellLootLegendary');
         }
-        for (var rarity in ItemRarity) {
-            updateValue(rarity);
-        }
-    }
-
-    function save() {
-        localStorage.endlessAutoSellLootCommon = autoSellLoot.COMMON;
-        localStorage.endlessAutoSellLootUncommon = autoSellLoot.UNCOMMON;
-        localStorage.endlessAutoSellLootRare = autoSellLoot.RARE;
-        localStorage.endlessAutoSellLootEpic = autoSellLoot.EPIC;
-        localStorage.endlessAutoSellLootLegendary = autoSellLoot.LEGENDARY;
     }
 
     function reset() {
-        // Set all rarities to false
-        for (var i in autoSellLoot) {
-            autoSellLoot[i] = false;
-            updateValue(i);
-        }
         addHooks();
     }
 
@@ -312,28 +223,9 @@ function autoSellLoot() {
             }
         }
     }
-
-    function updateValue(option) {
-        $("#autoSellValue" + option.formatCapitalize()).html(autoSellLoot[option]?"ON":"OFF");
-    }
-
-    function getItemColor(type) {
-        switch (type) {
-            case ItemRarity.COMMON:
-                return "#fff";
-            case ItemRarity.UNCOMMON:
-                return "#00ff05";
-            case ItemRarity.RARE:
-                return "#0005ff";
-            case ItemRarity.EPIC:
-                return "#b800af";
-            case ItemRarity.LEGENDARY:
-                return "#ff6a00";
-        }
-    }
 }
 // Register
-autoSellLoot();
+// autoSellLoot();
 // End auto selling loot
 
 // Start mercenary highlighting
@@ -376,15 +268,15 @@ function mercenaryHighlighting() {
 
     function addHooks() {
         var originalPurchaseMercenary = game.mercenaryManager.purchaseMercenary;
-        game.mercenaryManager.purchaseMercenary = function(type) {
-            originalPurchaseMercenary.apply(game.mercenaryManager, arguments);
+        game.mercenaryManager.purchaseMercenary = function() {
+            originalPurchaseMercenary.apply(this, arguments);
             highlightMostEfficientMercenary();
         }
 
         // Re-calculate after buying an upgrade
         var originalPurchaseUpgrade = game.upgradeManager.purchaseUpgrade;
-        game.upgradeManager.purchaseUpgrade = function(id) {
-            originalPurchaseUpgrade.apply(game.upgradeManager, arguments);
+        game.upgradeManager.purchaseUpgrade = function() {
+            originalPurchaseUpgrade.apply(this, arguments);
             highlightMostEfficientMercenary();
         }
     }
@@ -497,18 +389,18 @@ function monsterKillStats() {
         var originalMonsterCreator = game.monsterCreator.createRandomMonster;
         game.monsterCreator.createRandomMonster = function() {
             // Create a monster
-            var newMonster = originalMonsterCreator.apply(game.monsterCreator, arguments);
+            var newMonster = originalMonsterCreator.apply(this, arguments);
             // Override it's takeDamage function
             var originalDamageFunction = newMonster.takeDamage;
-            newMonster.takeDamage = function(damage) {
+            newMonster.takeDamage = function() {
                 // Lets not continue if they're already dead
-                if (!newMonster.alive) {
+                if (!this.alive) {
                     return;
                 }
-                originalDamageFunction.apply(newMonster, arguments);
+                originalDamageFunction.apply(this, arguments);
                 // Yay, it was killed!
-                if (!newMonster.alive) {
-                    monsterKilled(newMonster);
+                if (!this.alive) {
+                    monsterKilled(this);
                 }
             }
 
@@ -630,7 +522,7 @@ function DPS() {
         $("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.toggleDPSClick()">' +
             'Enable damage per second: <span id="dpsValue">OFF</span></div>');
         // Add ugly bit for dps
-        $("#combatArea").append('<div id="dpsDisplay" style="position: absolute; top: 52px; left: 625px; font-family: \'Gentium Book Basic\'; font-size: 20px; color: #ffd800;text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;-moz-user-select: -moz-none;-khtml-user-select: none;-webkit-user-select: none;-ms-user-select: none;user-select: none;">' +
+        $("#gameArea").append('<div id="dpsDisplay" style="position: absolute; top: 52px; left: 625px; font-family: \'Gentium Book Basic\'; font-size: 20px; color: #ffd800;text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;-moz-user-select: -moz-none;-khtml-user-select: none;-webkit-user-select: none;-ms-user-select: none;user-select: none;">' +
             '<span id="dps">0</span> dps</div>');
     }
 
@@ -653,7 +545,7 @@ function DPS() {
             
             // Center the dps... :3
             var dps = $("#dpsDisplay");
-            var pix = 625 - dps.width() / 2;
+            var pix = $("#gameArea").width() / 2 - dps.width() / 2;
             dps.css('left', pix + 'px');
             
             lastUpdate = endlessImprovement.currentTime;
@@ -678,10 +570,10 @@ function DPS() {
         var originalMonsterCreator = game.monsterCreator.createRandomMonster;
         game.monsterCreator.createRandomMonster = function() {
             // Create a monster
-            var newMonster = originalMonsterCreator.apply(game.monsterCreator, arguments);
+            var newMonster = originalMonsterCreator.apply(this, arguments);
             // Override it's takeDamage function
             var originalDamageFunction = newMonster.takeDamage;
-            newMonster.takeDamage = function(damage) {
+            newMonster.takeDamage = function() {
                 // Lets not continue if they're already dead
                 if (!this.alive) {
                     return;
