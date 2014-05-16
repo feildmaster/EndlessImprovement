@@ -522,6 +522,8 @@ monsterKillStats();
 
 // Start monster kill quests
 function monsterKillQuests() {
+    var bossKillPercentage = 10;
+
     new Improvement(null, load, save, update, reset).register();
     QuestType.ENDLESS_BOSSKILL  = "EndlessBossKill";
 
@@ -576,7 +578,7 @@ function monsterKillQuests() {
         if (game.player.level >= 30 && killLevelAwarded < game.player.level) {
             var name = "Kill a boss";
             var description = "Kill a boss equal to your level, prove your worth!";
-            var quest = new Quest(name, description, QuestType.ENDLESS_BOSSKILL, 0, endlessImprovement.bossKills, 0, '10%');
+            var quest = new Quest(name, description, QuestType.ENDLESS_BOSSKILL, 0, endlessImprovement.bossKills, 0, bossKillPercentage + '%');
             hookBossKillQuest(quest);
             game.questsManager.addQuest(quest);
         }
@@ -600,7 +602,7 @@ function monsterKillQuests() {
     }
 
     function rewardBossKillQuest() {
-        game.player.gainExperience(Math.ceil(game.player.experienceRequired / 10), false);
+        game.player.gainExperience(Math.ceil(game.player.experienceRequired * bossKillPercentage / 100), false);
         game.stats.experienceFromQuests += game.player.lastExperienceGained;
     }
 }
