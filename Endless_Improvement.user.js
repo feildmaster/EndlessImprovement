@@ -264,9 +264,7 @@ function autoSellLoot() {
             }
         }
         for (var rarity in ItemRarity) {
-            if (rarity !== 'count') {
-                updateValue(rarity);
-            }
+            updateValue(rarity);
         }
     }
 
@@ -279,6 +277,11 @@ function autoSellLoot() {
     }
 
     function reset() {
+        // Set all rarities to false
+        for (var i in autoSellLoot) {
+            autoSellLoot[i] = false;
+            updateValue(i);
+        }
         addHooks();
     }
 
