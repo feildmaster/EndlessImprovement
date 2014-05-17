@@ -11,6 +11,13 @@
 // @grant       none
 // ==/UserScript==
 
+// Fix checkboxes on refresh - by unchecking them (They don't persist)
+document.getElementById("checkboxInput").checked = false;
+for (var x = 2; x <= 5; x++) {
+    document.getElementById("checkboxInput" + x).checked = false;
+}
+// Fix checkboxes on refresh
+
 // Start core infrastructure - Everything is an improvement!
 var endlessImprovement = game.endlessImprovement = new ImprovementManager();
 
