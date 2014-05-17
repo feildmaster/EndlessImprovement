@@ -169,7 +169,7 @@ function statWindowImprovement() {
     }
     
     function newUpdate() {
-        if (!statsWindowShown) {
+        if (statsWindowShown) {
             originalStatsUpdate.apply(this);
         }
     }
