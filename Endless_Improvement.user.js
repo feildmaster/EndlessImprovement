@@ -154,6 +154,42 @@ Improvement.prototype.register = function() {
 }
 // End core infrastructure
 
+// Start quest fix
+function questFix() {
+    new Improvement(init, null, null, null, reset).register();
+    
+    function init() {
+        addHooks();
+    }
+    
+    function reset() {
+        addHooks();
+    }
+    
+    function addHooks() {
+        game.questsManager.getSelectedQuest = function() {
+            if (this.quests.length > this.selectedQuest) {
+                return this.quests[this.selectedQuest];
+            } else {
+                return null; 
+            }
+        }
+        
+        var originalRemoveQuest = game.questsManager.removeQuest;
+        game.questsManager.removeQuest = function(id) {
+            var removed = this.selectedQuest == id;
+            originalRemoveQuest.apply(this, arguments);
+            
+            // Selected quest exists! Show the quest area. this.selectedQuest = 0;
+            if (removed && this.selectedQuest < this.quests.length) {
+                $("#questTextArea").show();
+            }
+        }
+    }
+}
+questFix();
+// End quest fix
+
 // Start stats window improvement - only update when the window is open!
 function statWindowImprovement() {
     new Improvement(init, null, null, null, reset).register();
