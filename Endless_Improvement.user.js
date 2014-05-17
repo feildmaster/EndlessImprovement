@@ -148,30 +148,27 @@ Improvement.prototype.register = function() {
 // End core infrastructure
 
 // Start stats window improvement - only update when the window is open!
-// TODO: This is now harder to do. :( (Toggle)
 function statWindowImprovement() {
-    new Improvement(init).register();
+    new Improvement(init, null, null, null, reset).register();
+
+    var originalStatsUpdate = game.stats.update;
 
     function init() {
-        var statsWindowShowing = false;
-
-        $("#stats").mousedown(function() {
-            statsWindowShowing = true;
-        });
-        $("#statsWindowExitButton").mousedown(function() {
-            statsWindowShowing = false;
-        });
-
-        var originalStatsUpdate = game.stats.update;
-        game.stats.update = function() {
-            if (statsWindowShowing) {
-                originalStatsUpdate.apply(game.stats);
-            }
+        game.stats.update = newUpdate;
+    }
+    
+    function reset() {
+        originalStatsUpdate = game.stats.update;
+    }
+    
+    function newUpdate() {
+        if (!statsWindowShown) {
+            originalStatsUpdate.apply(this);
         }
     }
 }
 // Register
-// statWindowImprovement();
+statWindowImprovement();
 // End stats window improvement
 
 // Start auto selling loot - TODO: consider if needed anymore
