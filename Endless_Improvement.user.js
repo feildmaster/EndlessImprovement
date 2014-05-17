@@ -178,7 +178,7 @@ function statWindowImprovement() {
 statWindowImprovement();
 // End stats window improvement
 
-// Start auto selling loot - TODO: consider if needed anymore
+// Start auto selling loot
 function autoSellLoot() {
     new Improvement(init, load, null, null, reset).register();
 
@@ -208,28 +208,36 @@ function autoSellLoot() {
         game.stats.itemsSold++;
         game.stats.goldFromItems += value;
     }
+    
+    var autoSellLoot = {
+        "COMMON": "Commons",
+        "UNCOMMON": "Uncommons",
+        "RARE": "Rares",
+        "EPIC": "Epics",
+        "LEGENDARY": "Legendaries",
+    };
 
     function addHooks() {
         // Create a new lootItem function, this saves needless calculations...
         game.inventory.lootItem = function(item) {
-            for (var x = 0; x < game.inventory.maxSlots; x++) {
-                if (game.inventory.slots[x] == null) {
+            for (var x = 0; x < this.maxSlots; x++) {
+                if (this.slots[x] == null) {
                     // You can only sell what you can carry!
-                    if (autoSellLoot[item.rarity]) {
+                    if (this['autoSell' + autoSellLoot[item.rarity]]) {
                         sell(item);
                     } else {
-                        game.inventory.slots[x] = item;
-                        $("#inventoryItem" + (x + 1)).css('background', ('url("/includes/images/itemSheet2.png") ' + item.iconSourceX + 'px ' + item.iconSourceY + 'px'));
+                        this.addItemToSlot(item, x);
                     }
                     game.stats.itemsLooted++;
                     break;
                 }
             }
         }
+        // TODO: Add hook for game.inventory.update, items get sold automatically.... so we should change how vanilla autosell works
     }
 }
 // Register
-// autoSellLoot();
+autoSellLoot();
 // End auto selling loot
 
 // Start mercenary highlighting
