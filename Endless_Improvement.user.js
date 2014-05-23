@@ -187,6 +187,13 @@ function questFix() {
             }
         }
         
+        var originalAddQuest = game.questsManager.addQuest;
+        game.questsManager.addQuest = function(quest) {
+            // Fix quest display id
+            quest.displayId = this.quests.length + 1;
+            originalAddQuest.apply(this, arguments);
+        }
+        
         var originalRemoveQuest = game.questsManager.removeQuest;
         game.questsManager.removeQuest = function(id) {
             var removed = this.selectedQuest == id;
