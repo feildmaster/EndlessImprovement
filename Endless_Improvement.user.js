@@ -22,7 +22,7 @@ for (var x = 2; x <= 5; x++) {
 var endlessImprovement = game.endlessImprovement = new ImprovementManager();
 
 function ImprovementManager() {
-    this.currentTime = 0; // Is updated on updates
+    var currentTime = 0; // Is updated on updates
     var improvements = new Array(); // PRIVATE-NESS
     var pending = new Array();
 
@@ -30,6 +30,10 @@ function ImprovementManager() {
         if (improvement instanceof Improvement) {
             pending.push(improvement);
         }
+    }
+    
+    this.getCurrentTime = function() {
+        return currentTime;
     }
 
     function doInit() {
@@ -108,7 +112,7 @@ function ImprovementManager() {
     // Add update hook
     var originalUpdate = game.update;
     game.update = function() {
-        endlessImprovement.currentTime = Date.now();
+        currentTime = Date.now();
         originalUpdate.apply(this);
         doUpdate();
     }
@@ -402,19 +406,24 @@ mercenaryHighlighting();
 
 // Start bonus kill stats
 function monsterKillStats() {
-    endlessImprovement.bossKills = 0;
+    var bossKills = 0;
     var bossLevel = 0;
     var isUpdated = false;
 
     new Improvement(init, load, save, update, reset).register();
 
+    // Add a global getter
+    endlessImprovement.getBossKills = function() {
+        return bossKills;
+    }
+    
     function init() {
         addHooks();
     }
 
     function load() {
         if (localStorage.endlessBossKills) {
-            endlessImprovement.bossKills = parseInt(localStorage.endlessBossKills);
+            bossKills = parseInt(localStorage.endlessBossKills);
             bossLevel = parseInt(localStorage.endlessBossLevel);
         }
 
@@ -425,7 +434,7 @@ function monsterKillStats() {
     }
 
     function save() {
-        localStorage.endlessBossKills = endlessImprovement.bossKills;
+        localStorage.endlessBossKills = bossKills;
         localStorage.endlessBossLevel = bossLevel;
     }
 
@@ -433,13 +442,13 @@ function monsterKillStats() {
         if (isUpdated) {
             return;
         }
-        $("#statsWindowBossKills").html(endlessImprovement.bossKills.formatMoney(0));
+        $("#statsWindowBossKills").html(bossKills.formatMoney(0));
         $("#statsWindowBossLevel").html(bossLevel.formatMoney(0));
         isUpdated = true;
     }
 
     function reset() {
-        endlessImprovement.bossKills = 0;
+        bossKills = 0;
         bossLevel = 0;
         isUpdated = false;
         addHooks();
@@ -453,7 +462,7 @@ function monsterKillStats() {
             }
 
             if (monster.level === game.player.level) {
-                endlessImprovement.bossKills++;
+                bossKills++;
                 isUpdated = false;
             }
         }
@@ -545,7 +554,7 @@ function monsterKillQuests() {
         if (game.player.level >= 30 && killLevelAwarded < game.player.level) {
             var name = "Kill a boss";
             var description = "Kill a boss equal to your level, prove your worth!";
-            var quest = new Quest(name, description, QuestType.ENDLESS_BOSSKILL, 0, endlessImprovement.bossKills, 0, bossKillPercentage + '%');
+            var quest = new Quest(name, description, QuestType.ENDLESS_BOSSKILL, 0, endlessImprovement.getBossKills(), 0, bossKillPercentage + '%');
             hookBossKillQuest(quest);
             game.questsManager.addQuest(quest);
         }
@@ -565,7 +574,7 @@ function monsterKillQuests() {
 
     function updateBossKillQuest() {
         // Complete if we have more kills than when this quest was made
-        this.complete = endlessImprovement.bossKills > this.typeAmount;
+        this.complete = endlessImprovement.getBossKills() > this.typeAmount;
     }
 
     function rewardBossKillQuest() {
@@ -619,7 +628,7 @@ function DPS() {
     }
 
     function update() {
-        if (enabled && endlessImprovement.currentTime - lastUpdate > 1000) {
+        if (enabled && endlessImprovement.getCurrentTime() - lastUpdate > 1000) {
             $("#dps").html(damageDealt.formatMoney(0));
             damageDealt = 0;
             
@@ -628,7 +637,7 @@ function DPS() {
             var pix = $("#gameArea").width() / 2 - dps.width() / 2;
             dps.css('left', pix + 'px');
             
-            lastUpdate = endlessImprovement.currentTime;
+            lastUpdate = endlessImprovement.getCurrentTime();
         }
     }
 
@@ -709,7 +718,7 @@ function XPS() {
     
     var lastEnabled = true; // We default to 73, so act like DPS is enabled
     function update() {
-        if (enabled && endlessImprovement.currentTime - lastUpdate > 1000) {
+        if (enabled && endlessImprovement.getCurrentTime() - lastUpdate > 1000) {
             $("#xps").html(xpGained.formatMoney(0));
             xpGained = 0;
 
@@ -717,7 +726,7 @@ function XPS() {
             var pix = $("#gameArea").width() / 2 - xps.width() / 2;
             xps.css('left', pix + 'px');
             
-            lastUpdate = endlessImprovement.currentTime;
+            lastUpdate = endlessImprovement.getCurrentTime();
         }
         
         if (lastEnabled != endlessImprovement.dpsEnabled()) {
