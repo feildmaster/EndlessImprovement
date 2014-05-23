@@ -613,7 +613,7 @@ function DPS() {
 
     function update() {
         if (enabled && endlessImprovement.currentTime - lastUpdate > 1000) {
-            $("#dps").html(damageDealt === 0 ? 0 : damageDealt.formatMoney());
+            $("#dps").html(damageDealt.formatMoney(0));
             damageDealt = 0;
             
             // Center the dps... :3
@@ -703,7 +703,7 @@ function XPS() {
     var lastEnabled = true; // We default to 73, so act like DPS is enabled
     function update() {
         if (enabled && endlessImprovement.currentTime - lastUpdate > 1000) {
-            $("#xps").html(xpGained == 0 ? 0 : xpGained.formatMoney(0));
+            $("#xps").html(xpGained.formatMoney(0));
             xpGained = 0;
 
             var xps = $("#xpsDisplay");
