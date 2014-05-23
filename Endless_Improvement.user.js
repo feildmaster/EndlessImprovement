@@ -190,6 +190,14 @@ function questFix() {
 questFix();
 // End quest fix
 
+// Start "better" draggable windows
+$("#characterWindow").draggable("option", "handle", "#characterWindowTitle");
+$("#mercenariesWindow").draggable("option", "handle", "#mercenariesWindowTitle");
+$("#upgradesWindow").draggable("option", "handle", "#upgradesWindowTitle");
+$("#questsWindow").draggable("option", "handle", "#questsWindowTitle");
+$("#inventoryWindow").draggable("option", "handle", "#inventoryWindowTitle");
+// End "better" draggable windows
+
 // Start stats window improvement - only update when the window is open!
 function statWindowImprovement() {
     new Improvement(init, null, null, null, reset).register();
