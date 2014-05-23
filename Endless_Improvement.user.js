@@ -565,6 +565,11 @@ function DPS() {
     var enabled = false;
 
     new Improvement(init, load, save, update, reset).register();
+    
+    // Add a global getter
+    endlessImprovement.dpsEnabled = function() {
+        return enabled;
+    }
 
     function init() {
         addHooks();
@@ -646,6 +651,88 @@ function DPS() {
 }
 DPS();
 // End DPS
+
+// Start XPS
+function XPS() {
+    var xpGained = 0;
+    var lastUpdate = 0;
+    var enabled = false;
+    
+    new Improvement(init, load, save, update, reset).register();
+    
+    function init() {
+        addHooks();
+
+        game.toggleXPSClick = function() {
+            enabled = !enabled;
+            updateOption();
+        }
+
+        // Add option
+        $("#optionsWindowOptionsArea").append('<div class="optionsWindowOption" onmousedown="game.toggleXPSClick()">' +
+            'Enable experience per second: <span id="xpsValue">OFF</span></div>');
+        // Add ugly bit for xps
+        $("#gameArea").append('<div id="xpsDisplay" style="position: absolute; top: 73px; left: 625px; font-family: \'Gentium Book Basic\'; font-size: 20px; color: #ffd800;text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;-moz-user-select: -moz-none;-khtml-user-select: none;-webkit-user-select: none;-ms-user-select: none;user-select: none;">' +
+            '<span id="xps">0</span> xps</div>');
+    }
+    
+    function load() {
+        if (localStorage.xpsEnabled) {
+            enabled = localStorage.xpsEnabled === "true";
+        }
+
+        updateOption();
+    }
+    
+    function save() {
+        localStorage.xpsEnabled = enabled;
+    }
+    
+    var lastEnabled = true; // We default to 73, so act like DPS is enabled
+    function update() {
+        if (enabled && endlessImprovement.currentTime - lastUpdate > 1000) {
+            $("#xps").html(xpGained == 0 ? 0 : xpGained.formatMoney(0));
+            xpGained = 0;
+
+            var xps = $("#xpsDisplay");
+            var pix = $("#gameArea").width() / 2 - xps.width() / 2;
+            xps.css('left', pix + 'px');
+            
+            lastUpdate = endlessImprovement.currentTime;
+        }
+        
+        if (lastEnabled != endlessImprovement.dpsEnabled()) {
+            var pixels = endlessImprovement.dpsEnabled() ? 73 : 52;
+            $("#xpsDisplay").css("top", pixels + "px");
+            lastEnabled = endlessImprovement.dpsEnabled();
+        }
+    }
+    
+    function reset() {
+        addHooks();
+    }
+
+    function updateOption() {
+        $("#xpsValue").html(enabled ? "ON" : "OFF");
+        if (enabled) {
+            $("#xpsDisplay").show();
+        } else {
+            $("#xpsDisplay").hide();
+        }
+    }
+    
+    function addHooks() {
+        var originalGainExp = game.player.gainExperience;
+        game.player.gainExperience = function() {
+            originalGainExp.apply(this, arguments);
+            if (enabled) {
+                xpGained += this.lastExperienceGained;
+            }
+        }
+    }
+}
+XPS();
+// End XPS
 
 $("#optionsWindowOptionsArea").append('<div id="improvementOptionsTitle" class="optionsWindowOptionsTitle">Endless Improvement Options</div>');
 
