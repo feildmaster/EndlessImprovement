@@ -15,4 +15,4 @@ Installation
 Features
 ========
 
-* [Available here](wiki/Features)
+* [Available here](https://github.com/feildmaster/EndlessImprovement/wiki/Features)
