@@ -746,6 +746,45 @@ function XPS() {
 XPS();
 // End XPS
 
+// Start persisting variables in the game
+function persistentGame() {
+    new Improvement(null, load, save).register();
+    
+    function load() {
+        // Persist event time
+        if (localStorage.endlessEventTime) {
+            game.eventManager.eventSpawnTimeRemaining = parseInt(localStorage.endlessEventTime);
+        }
+        // Persist buffs
+        if (localStorage.endlessBuffs) {
+            var buffs = JSON.parse(localStorage.endlessBuffs);
+            for (var x = 0; x < buffs.length; x++) {
+                var buff = new Buff(buffs[x].name, buffs[x].type, buffs[x].multiplier, 1, buffs[x].leftPos, buffs[x].topPos);
+                buff.maxDuration = buffs[x].maxDuration;
+                buff.currentDuration = buffs[x].currentDuration;
+                // TODO: Do this in a way that doesn't notify?
+                game.player.buffs.addBuff(buff);
+            }
+        }
+        // Persist death
+        if (localStorage.endlessDeath) {
+            game.player.resurrectionTimeRemaining = parseInt(localStorage.endlessDeath);
+        }
+    }
+    
+    function save() {
+        // Persist event time
+        localStorage.endlessEventTime = game.eventManager.eventSpawnTimeRemaining;
+        // TODO: Persist existing events
+        // Persist buffs
+        localStorage.endlessBuffs = JSON.stringify(game.player.buffs.buffs);
+        // Persist death
+        localStorage.endlessDeath = game.player.resurrectionTimeRemaining;
+    }
+}
+persistentGame();
+// End persisting variables in the game
+
 $("#optionsWindowOptionsArea").append('<div id="improvementOptionsTitle" class="optionsWindowOptionsTitle">Endless Improvement Options</div>');
 
 // Start MISC - Apparently we have no access to EndlessGame's formatMoney...
