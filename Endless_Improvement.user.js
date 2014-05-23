@@ -156,12 +156,24 @@ Improvement.prototype.register = function() {
 
 // Start quest fix
 function questFix() {
-    new Improvement(init, null, null, null, reset).register();
+    new Improvement(init, load, null, null, reset).register();
     
     function init() {
         addHooks();
     }
     
+    function load() {
+        // Fix quest buffs
+        if (localStorage.questBuffRewards) {
+            var buffs = JSON.parse(localStorage.getItem("questBuffRewards"));
+            for (var x = 0; x < game.questsManager.quests.length; x++) {
+                if (buffs.length > x) {
+                    game.questsManager.quests[x].buffReward = buffs[x];
+                }
+            }
+        }
+    }
+
     function reset() {
         addHooks();
     }
