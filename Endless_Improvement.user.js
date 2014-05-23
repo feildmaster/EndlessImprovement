@@ -835,10 +835,11 @@ function IIP() {
         var originalItemFactory = game.itemCreator.createRandomItem;
         game.itemCreator.createRandomItem = function() {
             var item = originalItemFactory.apply(this, arguments);
-            if (item) {
-                item.sellValue = Math.floor(item.level * (10 + ((getModifierByLines(item) + getModifierByType(item)) / 100)));
+            if (item && enabled) {
+                var modifier = 10 *  Math.pow(1.01, item.level);
+                item.sellValue = Math.floor(item.level * (modifier + ((getModifierByLines(item) + getModifierByType(item)) / 100)));
                 // Add autosell multiplier bonus
-                item.sellValue *= Math.pow(2, game.upgradeManager.autoSellUpgradesPurchased), getModifierByLines(item), getModifierByType(item);
+                item.sellValue *= Math.pow(2, game.upgradeManager.autoSellUpgradesPurchased);
             }
             return item;            
         }
